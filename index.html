@@ -1,0 +1,1538 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>🦖 DINOSAUR WORLD — Free Roam</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#050d08;
+    color:#fff;font-family:"Segoe UI",Arial,sans-serif;user-select:none;touch-action:none}
+  canvas{display:block}
+  #hud{position:fixed;inset:0;pointer-events:none;z-index:2}
+  .panel{background:rgba(6,18,11,.72);border:1px solid rgba(160,230,140,.25);
+    border-radius:14px;padding:9px 12px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  #hudTop{position:absolute;top:10px;left:10px;right:10px;display:flex;
+    justify-content:space-between;align-items:flex-start;gap:8px}
+  .title{font-size:clamp(14px,3.4vw,21px);font-weight:800;color:#b6ff8d;letter-spacing:.4px;
+    text-shadow:0 2px 10px rgba(120,255,100,.28)}
+  .sub{font-size:10px;color:#a8c9a5;margin-top:2px}
+  #clock{font-size:clamp(12px,3vw,16px);font-weight:700;text-align:right;color:#ffe9a8}
+  #dayNum{text-align:right}
+  #stats{position:absolute;top:84px;left:10px;width:178px;max-width:47vw}
+  .stat{font-size:11px;margin-bottom:7px;color:#dcecd9}
+  .stat b{float:right;color:#fff;font-weight:600}
+  .bar{height:7px;background:#1e3324;border-radius:8px;overflow:hidden;margin-top:3px}
+  .bar i{display:block;height:100%;width:100%;border-radius:8px;transition:width .3s}
+  #hpBar{background:linear-gradient(90deg,#3ddc63,#a4ffb0)}
+  #fdBar{background:linear-gradient(90deg,#ff9a3c,#ffd894)}
+  #wtBar{background:linear-gradient(90deg,#2ea8e0,#8fe9ff)}
+  #map{position:absolute;top:84px;right:10px;width:118px;height:118px;border-radius:50%;
+    border:2px solid rgba(180,240,160,.5);background:rgba(15,35,22,.75);
+    box-shadow:0 6px 24px rgba(0,0,0,.55)}
+  #toast{position:absolute;top:40%;left:50%;transform:translateX(-50%);
+    font-size:14px;font-weight:600;text-shadow:0 3px 10px #000;text-align:center;
+    width:88%;opacity:0;transition:opacity .4s;color:#f5ffe9;pointer-events:none}
+  #joyWrap{position:absolute;left:16px;bottom:20px;pointer-events:auto}
+  #joy{width:118px;height:118px;border-radius:50%;background:rgba(255,255,255,.08);
+    border:2px solid rgba(255,255,255,.35);position:relative;touch-action:none;
+    box-shadow:inset 0 0 30px rgba(0,0,0,.4)}
+  #knob{position:absolute;width:48px;height:48px;left:33px;top:33px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#e8ffc8,#79dd63);
+    box-shadow:0 0 20px rgba(130,255,110,.55)}
+  #rightPad{position:absolute;right:14px;bottom:20px;display:grid;
+    grid-template-columns:repeat(3,1fr);gap:8px;pointer-events:auto}
+  #rightPad button{width:54px;height:54px;border-radius:16px;font-size:19px;
+    background:rgba(18,52,32,.85);border:1px solid rgba(160,230,140,.45);
+    color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    padding:0;transition:transform .08s,background .15s}
+  #rightPad button:active{transform:scale(.9);background:rgba(70,150,80,.95)}
+  #rightPad button.on{background:rgba(120,215,90,.95);color:#08160c}
+  #hint{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);
+    font-size:9.5px;color:#cfe6cc;text-align:center;width:96%;opacity:.7}
+  #menu{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;
+    padding:20px;background:radial-gradient(circle at 50% 35%,#12301f,#040a06 78%)}
+  #menu .card{max-width:450px;width:100%;text-align:center;padding:28px 24px;
+    background:linear-gradient(#123020,#08160e);border:1px solid rgba(140,230,120,.42);
+    border-radius:26px;box-shadow:0 26px 90px rgba(0,0,0,.8)}
+  #menu h1{font-size:clamp(22px,6vw,32px);margin:0 0 12px;color:#b6ff8d;
+    text-shadow:0 3px 22px rgba(130,255,110,.35)}
+  #menu p{font-size:13.5px;line-height:1.65;color:#c6ddc3;margin:8px 0}
+  #menu .keys{font-size:11.5px;color:#8fb98c;margin-top:14px;line-height:1.85}
+  #btnStart{margin-top:18px;width:100%;padding:16px;border:none;border-radius:16px;
+    background:linear-gradient(90deg,#57c246,#a8f07d);color:#06140a;font-size:17px;
+    font-weight:800;cursor:pointer;box-shadow:0 8px 26px rgba(90,220,90,.35)}
+  #btnStart:active{transform:scale(.97)}
+  #loader{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;
+    background:#040a06;color:#b6ff8d;font-size:15px;letter-spacing:.5px}
+  @media (max-width:520px){
+    #stats{width:148px;top:76px}
+    #map{width:86px;height:86px;top:76px}
+    #joy{width:104px;height:104px}
+    #knob{width:42px;height:42px;left:29px;top:29px}
+    #rightPad button{width:48px;height:48px;font-size:17px;border-radius:14px}
+  }
+</style>
+</head>
+<body>
+<div id="loader">🦖 Olam yaratilmoqda...</div>
+
+<div id="hud">
+  <div id="hudTop">
+    <div class="panel">
+      <div class="title">🦖 TYRANNOSAURUS REX</div>
+      <div class="sub">Erkin yurish • Hech qanday to'siq yo'q</div>
+    </div>
+    <div class="panel">
+      <div id="clock">☀️ 08:00</div>
+      <div class="sub" id="dayNum">1-kun</div>
+    </div>
+  </div>
+
+  <div id="stats" class="panel">
+    <div class="stat">❤️ Salomatlik <b id="hpv">100</b><div class="bar"><i id="hpBar"></i></div></div>
+    <div class="stat">🍖 Ochlik <b id="fdv">100</b><div class="bar"><i id="fdBar"></i></div></div>
+    <div class="stat">💧 Chanqoq <b id="wtv">100</b><div class="bar"><i id="wtBar"></i></div></div>
+    <div class="sub" id="coords" style="margin-top:6px">X: 0  Z: 0</div>
+  </div>
+
+  <canvas id="map" width="180" height="180"></canvas>
+  <div id="toast"></div>
+
+  <div id="joyWrap"><div id="joy"><div id="knob"></div></div></div>
+
+  <div id="rightPad">
+    <button id="btnRun"   title="Yugurish">🏃</button>
+    <button id="btnJump"  title="Sakrash">⬆️</button>
+    <button id="btnRoar"  title="Ovoz">📣</button>
+    <button id="btnEat"   title="Ovqatlanish">🍃</button>
+    <button id="btnDrink" title="Suv ichish">💧</button>
+    <button id="btnSave"  title="Saqlash">💾</button>
+  </div>
+
+  <div id="hint">WASD / ←↑→↓ — yurish • Shift — yugurish • Space — sakrash</div>
+</div>
+
+<div id="menu">
+  <div class="card">
+    <h1>🦖 DINOSAUR WORLD</h1>
+    <p>Sen — yosh Tiranozavr. Butun orol sen uchun ochiq! Daraxtlar, toshlar, tog'lar va daryolar orqali bemalol yur.</p>
+    <p style="color:#8fd47a">🌴 To'liq erkinlik • 🏔️ Hamma joyga yurish mumkin • 🌊 Chuqur suvga ham kirish mumkin</p>
+    <div class="keys">
+      ⌨️ WASD / strelkalar — harakat<br>
+      🏃 Shift — yugurish • ⬆️ Space — sakrash<br>
+      📱 Telefonda — joystick va tugmalar
+    </div>
+    <button id="btnStart">▶ O'YINNI BOSHLASH</button>
+  </div>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+const $ = id => document.getElementById(id);
+const clamp = (v,a,b) => v < a ? a : (v > b ? b : v);
+const rand = (a,b) => a + Math.random()*(b-a);
+const smoothstep = (e0,e1,x) => { const t = clamp((x-e0)/(e1-e0),0,1); return t*t*(3-2*t); };
+const lerp = (a,b,t) => a + (b-a)*t;
+
+/* =========================================================
+   SKIN TEXTURES
+   ========================================================= */
+function makeSkinTexture(opts) {
+  const S = 512;
+  const c = document.createElement('canvas');
+  c.width = c.height = S;
+  const ctx = c.getContext('2d');
+
+  const g = ctx.createLinearGradient(0, 0, 0, S);
+  g.addColorStop(0, opts.base);
+  g.addColorStop(1, opts.belly);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, S, S);
+
+  for (let i = 0; i < 6000; i++) {
+    const x = Math.random() * S, y = Math.random() * S;
+    const r = 1.2 + Math.random() * 4.5;
+    ctx.globalAlpha = 0.20 + Math.random() * 0.38;
+    const v = Math.random();
+    ctx.fillStyle = v < 0.42 ? opts.dark : (v < 0.74 ? opts.mid : opts.light);
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.globalAlpha = 0.16;
+  for (let i = 0; i < 45; i++) {
+    ctx.strokeStyle = opts.dark;
+    ctx.lineWidth = 1 + Math.random() * 9;
+    ctx.beginPath();
+    const y = Math.random() * S;
+    ctx.moveTo(0, y);
+    ctx.bezierCurveTo(170, y + (Math.random()-.5)*90, 340, y + (Math.random()-.5)*90, 512, y + (Math.random()-.5)*45);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 0.28;
+  for (let i = 0; i < 26; i++) {
+    ctx.fillStyle = opts.dark;
+    const x = Math.random() * S, y = Math.random() * S;
+    ctx.beginPath();
+    ctx.ellipse(x, y, 6 + Math.random()*12, 3 + Math.random()*6, Math.random()*Math.PI, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(1.7, 1.7);
+  tex.anisotropy = 4;
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+/* =========================================================
+   SKY SHADER
+   ========================================================= */
+function makeSky() {
+  const uniforms = {
+    topColor:    { value: new THREE.Color(0x2a6cb0) },
+    midColor:    { value: new THREE.Color(0x9ccee8) },
+    bottomColor: { value: new THREE.Color(0xd9e8ee) },
+    sunDir:      { value: new THREE.Vector3(0, 1, 0) },
+    sunColor:    { value: new THREE.Color(0xfff0c0) }
+  };
+  const mat = new THREE.ShaderMaterial({
+    uniforms, side: THREE.BackSide, depthWrite: false, fog: false,
+    vertexShader: `
+      varying vec3 vW;
+      void main(){ vec4 wp = modelMatrix * vec4(position,1.0); vW = wp.xyz;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+    fragmentShader: `
+      uniform vec3 topColor, midColor, bottomColor, sunColor, sunDir;
+      varying vec3 vW;
+      void main(){
+        vec3 d = normalize(vW);
+        vec3 c = d.y > 0.0 ? mix(midColor, topColor, pow(d.y, 0.75))
+                           : mix(midColor, bottomColor, pow(-d.y, 0.55));
+        float sd = max(dot(d, normalize(sunDir)), 0.0);
+        c += sunColor * pow(sd, 18.0) * 0.9;
+        c += sunColor * pow(sd, 3.0) * 0.10;
+        gl_FragColor = vec4(c, 1.0);
+      }`
+  });
+  const sky = new THREE.Mesh(new THREE.SphereGeometry(750, 32, 20), mat);
+  sky.userData.uniforms = uniforms;
+  return sky;
+}
+
+/* =========================================================
+   TERRAIN
+   ========================================================= */
+const LAKE = { x: 38, z: 18, r: 32 };
+const WATER_Y = -2.2;
+const EDGE = 118;
+
+function fbm(x, z) {
+  let v = 0, a = 1, f = 1;
+  for (let i = 0; i < 4; i++) {
+    v += Math.sin(x*f*1.7 + Math.cos(z*f*1.3)) * Math.cos(z*f*1.1 + Math.sin(x*f*0.9)) * a;
+    a *= 0.5; f *= 2.1;
+  }
+  return v;
+}
+
+function terrainHeight(x, z) {
+  let h = 0;
+  h += Math.sin(x*0.028) * Math.cos(z*0.031) * 3.4;
+  h += Math.sin(x*0.071 + 1.3) * Math.cos(z*0.064 - 0.7) * 1.7;
+  h += Math.sin(x*0.017 - 0.4) * Math.cos(z*0.020 + 1.2) * 4.2;
+  h += fbm(x*0.04, z*0.04) * 1.1;
+
+  const d = Math.hypot(x, z);
+
+  const ring = smoothstep(58, 88, d) * (1 - smoothstep(96, 116, d));
+  h += ring * (9 + Math.sin(x*0.09) * Math.cos(z*0.08) * 4.5);
+
+  const pk = smoothstep(72, 100, d) * (1 - smoothstep(100, 118, d));
+  h += pk * Math.abs(Math.sin(x*0.13 + z*0.11)) * 8.0;
+
+  const fall = 1 - smoothstep(92, EDGE + 10, d);
+  h = h * fall - (1 - fall) * 14;
+
+  const ld = Math.hypot(x - LAKE.x, z - LAKE.z);
+  h -= (1 - smoothstep(4, LAKE.r, ld)) * 10;
+
+  return h;
+}
+
+/* =========================================================
+   SCENE
+   ========================================================= */
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x9cc8dd, 0.0038);
+
+const camera = new THREE.PerspectiveCamera(62, innerWidth/innerHeight, 0.1, 1200);
+
+const renderer = new THREE.WebGLRenderer({ antialias:true, powerPreference:'high-performance' });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.7));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+document.body.appendChild(renderer.domElement);
+
+const sky = makeSky();
+scene.add(sky);
+
+const hemi = new THREE.HemisphereLight(0xbdd9ff, 0x3b4d24, 1.15);
+scene.add(hemi);
+
+const sun = new THREE.DirectionalLight(0xfff0cc, 2.6);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+const sc = sun.shadow.camera;
+sc.left = -60; sc.right = 60; sc.top = 60; sc.bottom = -60; sc.near = 1; sc.far = 320;
+sun.shadow.bias = -0.0006;
+sun.shadow.normalBias = 0.02;
+scene.add(sun); scene.add(sun.target);
+
+// Stars
+const starGeo = new THREE.BufferGeometry();
+const starPos = new Float32Array(900 * 3);
+for (let i = 0; i < 900; i++) {
+  const th = Math.random() * Math.PI * 2;
+  const ph = Math.acos(rand(0.05, 1));
+  const r = 680;
+  starPos[i*3]   = Math.sin(ph) * Math.cos(th) * r;
+  starPos[i*3+1] = Math.cos(ph) * r;
+  starPos[i*3+2] = Math.sin(ph) * Math.sin(th) * r;
+}
+starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+const starMat = new THREE.PointsMaterial({
+  color: 0xffffff, size: 1.6, sizeAttenuation: false,
+  transparent: true, opacity: 0, depthWrite: false, fog: false
+});
+scene.add(new THREE.Points(starGeo, starMat));
+
+/* =========================================================
+   TERRAIN MESH
+   ========================================================= */
+const SAND = new THREE.Color(0xd8c78c);
+const GRASS = new THREE.Color(0x4b7c34);
+const GRASS2 = new THREE.Color(0x6fa248);
+const DRY = new THREE.Color(0x8b9250);
+const ROCKC = new THREE.Color(0x6f6b5a);
+const SNOW = new THREE.Color(0xe6eeea);
+
+const terrainGeo = new THREE.PlaneGeometry(440, 440, 180, 180);
+terrainGeo.rotateX(-Math.PI/2);
+const tPos = terrainGeo.attributes.position;
+const tCol = new Float32Array(tPos.count * 3);
+const cTmp = new THREE.Color();
+
+for (let i = 0; i < tPos.count; i++) {
+  const x = tPos.getX(i), z = tPos.getZ(i);
+  const y = terrainHeight(x, z);
+  tPos.setY(i, y);
+
+  const n = fbm(x * 0.09, z * 0.09) * 0.5 + 0.5;
+  cTmp.copy(GRASS).lerp(GRASS2, n);
+  if (y < 1.6) cTmp.lerp(SAND, 1 - smoothstep(-2.4, 1.6, y));
+  if (y > 6 && y < 11) cTmp.lerp(DRY, smoothstep(6, 11, y) * 0.45);
+  if (y > 9)  cTmp.lerp(ROCKC, smoothstep(9, 14, y));
+  if (y > 16) cTmp.lerp(SNOW, smoothstep(16, 22, y));
+
+  const jit = 0.94 + Math.random() * 0.12;
+  tCol[i*3] = cTmp.r * jit; tCol[i*3+1] = cTmp.g * jit; tCol[i*3+2] = cTmp.b * jit;
+}
+terrainGeo.setAttribute('color', new THREE.BufferAttribute(tCol, 3));
+terrainGeo.computeVertexNormals();
+
+const terrain = new THREE.Mesh(terrainGeo, new THREE.MeshStandardMaterial({
+  vertexColors: true, roughness: 0.97, metalness: 0.02
+}));
+terrain.receiveShadow = true;
+scene.add(terrain);
+
+/* =========================================================
+   WATER
+   ========================================================= */
+const waterMat = new THREE.MeshStandardMaterial({
+  color: 0x1c6d92, roughness: 0.08, metalness: 0.55,
+  transparent: true, opacity: 0.78
+});
+waterMat.onBeforeCompile = (shader) => {
+  shader.uniforms.uTime = { value: 0 };
+  shader.vertexShader = shader.vertexShader.replace(
+    '#include <begin_vertex>',
+    `#include <begin_vertex>
+     float w = sin(position.x * 0.22 + uTime * 1.1) * 0.16
+             + sin(position.y * 0.31 + uTime * 1.6) * 0.11
+             + sin((position.x + position.y) * 0.11 + uTime * 0.7) * 0.09;
+     transformed.z += w;`
+  );
+  waterMat.userData.shader = shader;
+};
+const waterGeo = new THREE.PlaneGeometry(560, 560, 110, 110);
+waterGeo.rotateX(-Math.PI / 2);
+const water = new THREE.Mesh(waterGeo, waterMat);
+water.position.y = WATER_Y;
+scene.add(water);
+
+/* =========================================================
+   VEGETATION (no collision — free walk)
+   ========================================================= */
+const dummy = new THREE.Object3D();
+
+function randomLandPoint(minR, maxR, minH = 1.0, maxH = 15) {
+  for (let i = 0; i < 60; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const r = minR + Math.random() * (maxR - minR);
+    const x = Math.cos(a) * r;
+    const z = Math.sin(a) * r;
+    if (Math.hypot(x - LAKE.x, z - LAKE.z) < LAKE.r + 3) continue;
+    const y = terrainHeight(x, z);
+    if (y > minH && y < maxH) return { x, y, z };
+  }
+  return null;
+}
+
+/* --- Trees --- */
+const TREE_COUNT = 300;
+const trunkGeo = new THREE.CylinderGeometry(0.24, 0.55, 5.6, 6);
+trunkGeo.translate(0, 2.8, 0);
+const leafGeos = [
+  new THREE.ConeGeometry(2.6, 7.5, 7),
+  new THREE.ConeGeometry(2.2, 6.5, 7),
+  new THREE.SphereGeometry(2.7, 8, 6)
+];
+leafGeos.forEach(g => g.translate(0, 6.7, 0));
+
+const trunkMesh = new THREE.InstancedMesh(trunkGeo,
+  new THREE.MeshStandardMaterial({ color: 0x5a3f26, roughness: 0.97, flatShading: true }),
+  TREE_COUNT);
+trunkMesh.castShadow = true; trunkMesh.receiveShadow = true;
+
+const leafColors = [0x2f6b33, 0x3b7a3c, 0x276030, 0x4a854a, 0x1f5327];
+const leafMeshs = [];
+for (let v = 0; v < 3; v++) {
+  const im = new THREE.InstancedMesh(
+    leafGeos[v],
+    new THREE.MeshStandardMaterial({
+      color: leafColors[v % leafColors.length],
+      roughness: 0.92, flatShading: true
+    }),
+    Math.ceil(TREE_COUNT / 3)
+  );
+  im.castShadow = true; im.receiveShadow = true;
+  leafMeshs.push(im);
+}
+leafMeshs.forEach(m => scene.add(m));
+
+const treePositions = [];
+const leafCounts = [0, 0, 0];
+let ti = 0;
+while (ti < TREE_COUNT) {
+  const p = randomLandPoint(10, 104);
+  if (!p) continue;
+  const s = rand(0.7, 1.6);
+  dummy.position.set(p.x, p.y - 0.25, p.z);
+  dummy.rotation.set(0, Math.random() * Math.PI * 2, 0);
+  dummy.scale.set(s, s * rand(0.85, 1.35), s);
+  dummy.updateMatrix();
+  trunkMesh.setMatrixAt(ti, dummy.matrix);
+
+  const v = Math.floor(Math.random() * 3);
+  leafMeshs[v].setMatrixAt(leafCounts[v]++, dummy.matrix);
+  treePositions.push({ x: p.x, z: p.z });
+  ti++;
+}
+trunkMesh.instanceMatrix.needsUpdate = true;
+leafMeshs.forEach((im, i) => { im.count = leafCounts[i]; im.instanceMatrix.needsUpdate = true; });
+scene.add(trunkMesh);
+
+/* --- Rocks --- */
+const ROCK_COUNT = 180;
+const rockMesh = new THREE.InstancedMesh(
+  new THREE.DodecahedronGeometry(1.4, 0),
+  new THREE.MeshStandardMaterial({ color: 0x6a6656, roughness: 1, flatShading: true }),
+  ROCK_COUNT
+);
+rockMesh.castShadow = true; rockMesh.receiveShadow = true;
+let ri = 0;
+while (ri < ROCK_COUNT) {
+  const p = randomLandPoint(7, 115, -0.5, 20);
+  if (!p) continue;
+  const s = rand(0.45, 2.6);
+  dummy.position.set(p.x, p.y - rand(0.2, 1.0), p.z);
+  dummy.rotation.set(Math.random()*3, Math.random()*3, Math.random()*3);
+  dummy.scale.set(s, s * rand(0.55, 1.0), s);
+  dummy.updateMatrix();
+  rockMesh.setMatrixAt(ri++, dummy.matrix);
+}
+rockMesh.instanceMatrix.needsUpdate = true;
+scene.add(rockMesh);
+
+/* --- Grass tufts --- */
+const GRASS_COUNT = 2600;
+const bladeGeo = new THREE.BufferGeometry();
+const bladeVerts = new Float32Array([
+  -0.05,0,0,  0.05,0,0,  0,0.55,0.03,
+  0.05,0,0,   0.03,0,0.07, 0,0.5,0.06
+]);
+bladeGeo.setAttribute('position', new THREE.BufferAttribute(bladeVerts, 3));
+bladeGeo.computeVertexNormals();
+const grassMesh = new THREE.InstancedMesh(bladeGeo,
+  new THREE.MeshStandardMaterial({ color: 0x5b8f3a, roughness: 0.9, side: THREE.DoubleSide }),
+  GRASS_COUNT);
+let gi = 0;
+while (gi < GRASS_COUNT) {
+  const p = randomLandPoint(5, 110, 1.6, 10);
+  if (!p) continue;
+  dummy.position.set(p.x, p.y, p.z);
+  dummy.rotation.set(0, Math.random() * Math.PI * 2, 0);
+  const s = rand(0.7, 1.6);
+  dummy.scale.set(s, s * rand(0.8, 1.8), s);
+  dummy.updateMatrix();
+  grassMesh.setMatrixAt(gi++, dummy.matrix);
+}
+grassMesh.instanceMatrix.needsUpdate = true;
+scene.add(grassMesh);
+
+/* --- Food bushes --- */
+const plants = [];
+const frondGeo = new THREE.ConeGeometry(0.32, 1.6, 5);
+frondGeo.translate(0, 0.8, 0);
+const leafMatA = new THREE.MeshStandardMaterial({ color: 0x8ed44c, roughness: 0.85, flatShading: true });
+const leafMatB = new THREE.MeshStandardMaterial({ color: 0x5fae35, roughness: 0.85, flatShading: true });
+
+function createPlant(x, y, z) {
+  const g = new THREE.Group();
+  const n = 5 + Math.floor(Math.random() * 3);
+  for (let i = 0; i < n; i++) {
+    const f = new THREE.Mesh(frondGeo, i % 2 ? leafMatB : leafMatA);
+    const a = (i / n) * Math.PI * 2 + Math.random() * 0.35;
+    f.position.set(Math.sin(a) * 0.2, 0, Math.cos(a) * 0.2);
+    f.rotation.set(Math.cos(a) * 0.55, a, -Math.sin(a) * 0.55);
+    f.castShadow = true;
+    g.add(f);
+  }
+  const berry = new THREE.Mesh(
+    new THREE.SphereGeometry(0.17, 8, 6),
+    new THREE.MeshStandardMaterial({ color: 0xd8374f, roughness: 0.45,
+      emissive: 0x330008, emissiveIntensity: 0.5 })
+  );
+  berry.position.y = 0.78;
+  g.add(berry);
+  g.position.set(x, y, z);
+  g.scale.setScalar(rand(0.85, 1.5));
+  g.userData.eaten = false;
+  scene.add(g);
+  plants.push(g);
+}
+for (let i = 0; i < 140; i++) {
+  const p = randomLandPoint(7, 102);
+  if (p) createPlant(p.x, p.y, p.z);
+}
+
+/* =========================================================
+   T-REX MODEL
+   ========================================================= */
+const skinTex = makeSkinTexture({
+  base:  '#4a5c2a', belly: '#7d855a',
+  dark:  '#2c3a17', mid:  '#3d4d22', light: '#6a7a44'
+});
+const bellyTex = makeSkinTexture({
+  base:  '#8b8a62', belly: '#b6b48d',
+  dark:  '#5c5a3d', mid:  '#767351', light: '#c6c49e'
+});
+
+const MAT = {
+  skin:  new THREE.MeshStandardMaterial({ map: skinTex, roughness: 0.88, metalness: 0.04 }),
+  belly: new THREE.MeshStandardMaterial({ map: bellyTex, roughness: 0.92 }),
+  dark:  new THREE.MeshStandardMaterial({ color: 0x2b3418, roughness: 0.95 }),
+  claw:  new THREE.MeshStandardMaterial({ color: 0x191813, roughness: 0.35, metalness: 0.35 }),
+  tooth: new THREE.MeshStandardMaterial({ color: 0xf5efd9, roughness: 0.28, metalness: 0.05 }),
+  eyeW:  new THREE.MeshStandardMaterial({ color: 0xf2e9c8, roughness: 0.25 }),
+  eyeB:  new THREE.MeshStandardMaterial({ color: 0x100a02, roughness: 0.08,
+    emissive: 0x7a2a00, emissiveIntensity: 1.1 }),
+  pupil: new THREE.MeshBasicMaterial({ color: 0x000000 })
+};
+
+const SPH = (r, w=20, h=16) => new THREE.SphereGeometry(r, w, h);
+function ell(parent, mat, x, y, z, sx, sy, sz, rx=0, ry=0, rz=0) {
+  const m = new THREE.Mesh(SPH(1), mat);
+  m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.rotation.set(rx, ry, rz);
+  m.castShadow = true; m.receiveShadow = true;
+  parent.add(m); return m;
+}
+
+function buildTRex() {
+  const root = new THREE.Group();
+
+  const hips = new THREE.Group();
+  hips.position.set(0, 3.25, 0);
+  root.add(hips);
+
+  ell(hips, MAT.skin, 0, 0.10, 0.55, 1.05, 1.22, 2.10);
+  ell(hips, MAT.skin, 0, 0.28, 2.05, 0.98, 1.38, 1.60);
+  ell(hips, MAT.belly, 0, -0.48, 0.75, 0.82, 0.56, 1.90);
+  ell(hips, MAT.skin, 0, -0.18, -0.80, 0.95, 1.08, 1.12);
+
+  ell(hips, MAT.skin,  0.95, 0.05, 0.55, 0.30, 0.55, 1.10);
+  ell(hips, MAT.skin, -0.95, 0.05, 0.55, 0.30, 0.55, 1.10);
+  ell(hips, MAT.skin,  0.90, 0.15, 2.05, 0.28, 0.60, 0.85);
+  ell(hips, MAT.skin, -0.90, 0.15, 2.05, 0.28, 0.60, 0.85);
+
+  const neckRoot = new THREE.Group();
+  neckRoot.position.set(0, 0.55, 2.70);
+  hips.add(neckRoot);
+  ell(neckRoot, MAT.skin, 0, 0.15, 0.30, 0.55, 0.62, 0.55);
+  ell(neckRoot, MAT.skin, 0, 0.45, 0.72, 0.50, 0.55, 0.55);
+  ell(neckRoot, MAT.skin, 0, 0.78, 1.08, 0.46, 0.52, 0.52);
+  ell(neckRoot, MAT.skin, 0, 1.05, 1.42, 0.44, 0.50, 0.50);
+
+  const head = new THREE.Group();
+  head.position.set(0, 1.22, 1.78);
+  neckRoot.add(head);
+
+  ell(head, MAT.skin, 0, 0.06, 0.10, 0.50, 0.60, 0.62);
+  ell(head, MAT.skin, 0, 0.10, 0.62, 0.42, 0.52, 0.72);
+  ell(head, MAT.skin, 0, 0.02, 1.18, 0.32, 0.42, 0.55);
+  ell(head, MAT.dark,  0.30, 0.30, 0.52, 0.16, 0.10, 0.35, 0.15, 0.2, 0.2);
+  ell(head, MAT.dark, -0.30, 0.30, 0.52, 0.16, 0.10, 0.35, 0.15,-0.2,-0.2);
+  ell(head, MAT.dark, 0, 0.35, 0.12, 0.30, 0.09, 0.30);
+  ell(head, MAT.dark,  0.13, 0.12, 1.32, 0.05, 0.04, 0.09);
+  ell(head, MAT.dark, -0.13, 0.12, 1.32, 0.05, 0.04, 0.09);
+  ell(head, MAT.dark,  0.42, 0.10, -0.02, 0.05, 0.08, 0.08);
+  ell(head, MAT.dark, -0.42, 0.10, -0.02, 0.05, 0.08, 0.08);
+
+  const eyes = [];
+  for (const s of [-1, 1]) {
+    const eyeG = new THREE.Group();
+    eyeG.position.set(s * 0.31, 0.17, 0.60);
+    head.add(eyeG);
+    const sclera = new THREE.Mesh(SPH(0.11, 16, 14), MAT.eyeW);
+    eyeG.add(sclera);
+    const pupil = new THREE.Mesh(SPH(0.075, 14, 12), MAT.eyeB);
+    pupil.position.set(s * 0.01, 0, 0.03); pupil.scale.set(1, 0.75, 1);
+    eyeG.add(pupil);
+    const pDot = new THREE.Mesh(SPH(0.028, 8, 6), MAT.pupil);
+    pDot.position.set(s * 0.02, 0, 0.06); eyeG.add(pDot);
+    const shine = new THREE.Mesh(SPH(0.025, 8, 6), new THREE.MeshBasicMaterial({color:0xffffff}));
+    shine.position.set(s * 0.035, 0.045, 0.09); eyeG.add(shine);
+    eyes.push({ g: eyeG });
+  }
+
+  const toothCone = new THREE.ConeGeometry(0.038, 0.20, 5);
+  for (let i = 0; i < 11; i++) {
+    const t = i / 10;
+    const z = 0.34 + t * 0.92;
+    const w = 0.24 * (1 - t * 0.35);
+    const y = -0.22 - t * 0.06;
+    const sz = 1.05 - t * 0.35;
+    for (const s of [-1, 1]) {
+      const th = new THREE.Mesh(toothCone, MAT.tooth);
+      th.position.set(s * w, y, z);
+      th.rotation.x = Math.PI;
+      th.scale.setScalar(sz);
+      th.castShadow = true;
+      head.add(th);
+    }
+  }
+
+  const jaw = new THREE.Group();
+  jaw.position.set(0, -0.16, 0.05);
+  head.add(jaw);
+  ell(jaw, MAT.belly, 0, -0.06, 0.55, 0.32, 0.30, 1.05);
+  ell(jaw, MAT.belly, 0, -0.10, 1.10, 0.24, 0.24, 0.42);
+  ell(jaw, MAT.skin, 0, 0.10, 0.18, 0.42, 0.28, 0.45);
+  for (let i = 0; i < 10; i++) {
+    const t = i / 9;
+    const z = 0.32 + t * 0.82;
+    const w = 0.22 * (1 - t * 0.30);
+    const sz = 0.95 - t * 0.30;
+    for (const s of [-1, 1]) {
+      const th = new THREE.Mesh(toothCone, MAT.tooth);
+      th.position.set(s * w, 0.14, z);
+      th.scale.setScalar(sz);
+      th.castShadow = true;
+      jaw.add(th);
+    }
+  }
+
+  function makeLeg(side) {
+    const hip = new THREE.Group();
+    hip.position.set(side * 0.82, -0.05, -0.15);
+    hips.add(hip);
+
+    ell(hip, MAT.skin, side * 0.06, -0.52, 0.02, 0.48, 0.82, 0.55, 0.05);
+    ell(hip, MAT.skin, side * 0.04, -0.95, 0.10, 0.36, 0.45, 0.40);
+    ell(hip, MAT.belly, side * 0.18, -0.60, 0.30, 0.22, 0.42, 0.30);
+
+    const knee = new THREE.Group();
+    knee.position.set(side * 0.08, -1.30, 0.0);
+    hip.add(knee);
+    ell(knee, MAT.skin, 0, 0.02, 0.02, 0.24, 0.22, 0.24);
+
+    const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.20, 1.15, 10), MAT.skin);
+    shin.position.set(0, -0.57, 0);
+    shin.castShadow = true; shin.receiveShadow = true;
+    knee.add(shin);
+    ell(knee, MAT.skin, 0, -1.12, 0, 0.18, 0.20, 0.20);
+
+    const ankle = new THREE.Group();
+    ankle.position.set(0, -1.22, 0.0);
+    knee.add(ankle);
+
+    const meta = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.14, 0.62, 9), MAT.skin);
+    meta.rotation.x = 0.55;
+    meta.position.set(0, -0.28, 0.12);
+    meta.castShadow = true;
+    ankle.add(meta);
+
+    const footG = new THREE.Group();
+    footG.position.set(0, -0.55, 0.32);
+    ankle.add(footG);
+    ell(footG, MAT.skin, 0, 0, 0, 0.30, 0.11, 0.32);
+
+    for (const a of [-0.55, 0, 0.55]) {
+      const toe = new THREE.Group();
+      toe.rotation.y = a;
+      footG.add(toe);
+      const tm = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.10, 0.48), MAT.skin);
+      tm.position.set(0, -0.02, 0.30); tm.castShadow = true;
+      toe.add(tm);
+      const claw = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.26, 6), MAT.claw);
+      claw.position.set(0, -0.03, 0.60);
+      claw.rotation.x = Math.PI / 2; claw.castShadow = true;
+      toe.add(claw);
+    }
+    return { hip, knee, ankle, foot: footG };
+  }
+  const legL = makeLeg(-1), legR = makeLeg(1);
+
+  function makeArm(side) {
+    const shoulder = new THREE.Group();
+    shoulder.position.set(side * 0.72, 0.32, 2.35);
+    shoulder.rotation.set(0.55, 0, side * 0.20);
+    hips.add(shoulder);
+    ell(shoulder, MAT.skin, 0, -0.20, 0, 0.16, 0.28, 0.16);
+    const fore = new THREE.Group();
+    fore.position.set(0, -0.42, 0);
+    fore.rotation.x = -1.15;
+    shoulder.add(fore);
+    ell(fore, MAT.skin, 0, -0.18, 0, 0.12, 0.24, 0.12);
+    for (const c of [-1, 1]) {
+      const claw = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.24, 6), MAT.claw);
+      claw.position.set(c * 0.06, -0.42, 0.04);
+      claw.rotation.x = 2.4; claw.castShadow = true;
+      fore.add(claw);
+    }
+    return { shoulder, fore };
+  }
+  const armL = makeArm(-1), armR = makeArm(1);
+
+  const tailRoot = new THREE.Group();
+  tailRoot.position.set(0, 0.05, -1.70);
+  hips.add(tailRoot);
+  const tailSegs = [];
+  let tp = tailRoot;
+  for (let i = 0; i < 9; i++) {
+    const seg = new THREE.Group();
+    seg.position.z = (i === 0) ? 0 : -0.60;
+    const r0 = 0.48 - i * 0.045;
+    const r1 = r0 - 0.048;
+    const m = new THREE.Mesh(
+      new THREE.CylinderGeometry(Math.max(r1, 0.035), Math.max(r0, 0.06), 0.66, 10), MAT.skin);
+    m.rotation.x = Math.PI / 2;
+    m.position.z = -0.33;
+    m.castShadow = true; m.receiveShadow = true;
+    seg.add(m);
+    tp.add(seg); tp = seg;
+    tailSegs.push(seg);
+  }
+
+  for (let i = 0; i < 14; i++) {
+    const t = i / 13;
+    const z = 2.4 - t * 5.6;
+    const y = 1.30 - Math.pow(t, 1.7) * 1.15;
+    const h = 0.32 - t * 0.20;
+    const spike = new THREE.Mesh(new THREE.ConeGeometry(0.075, h, 5), MAT.dark);
+    spike.position.set(0, y, z);
+    spike.rotation.x = -0.22;
+    spike.castShadow = true;
+    hips.add(spike);
+  }
+
+  root.userData = {
+    hips, head, jaw, eyes, neckRoot,
+    legs: [legL, legR],
+    arms: [armL, armR],
+    tail: tailSegs,
+    phase: 0, breathPhase: 0, jawTarget: 0,
+    blinkTimer: 2 + Math.random() * 3,
+    isTRex: true,
+    footPrevY: [0, 0]
+  };
+  return root;
+}
+
+/* =========================================================
+   HERBIVORES
+   ========================================================= */
+function buildHerbivore(colorA, colorB, type) {
+  const g = new THREE.Group();
+  const skin  = new THREE.MeshStandardMaterial({ color: colorA, roughness: 0.92 });
+  const belly = new THREE.MeshStandardMaterial({ color: colorB, roughness: 0.95 });
+  const dark  = new THREE.MeshStandardMaterial({ color: 0x25251c, roughness: 0.6 });
+  const horn  = new THREE.MeshStandardMaterial({ color: 0xd6c98f, roughness: 0.45 });
+
+  ell(g, skin,  0, 1.65, 0, 0.90, 0.95, 1.75);
+  ell(g, belly, 0, 1.22, 0.10, 0.72, 0.42, 1.50);
+
+  const head = new THREE.Group();
+  g.add(head);
+
+  if (type === 'longneck') {
+    ell(g, skin, 0, 2.15, 1.55, 0.48, 0.55, 0.55);
+    ell(g, skin, 0, 2.75, 1.85, 0.40, 0.48, 0.48);
+    ell(g, skin, 0, 3.35, 1.90, 0.35, 0.42, 0.42);
+    head.position.set(0, 3.85, 1.85);
+    ell(head, skin, 0, 0.05, 0.10, 0.45, 0.44, 0.55);
+    ell(head, skin, 0, -0.05, 0.55, 0.32, 0.32, 0.42);
+    ell(head, dark,  0.24, 0.15, 0.10, 0.10, 0.10, 0.10);
+    ell(head, dark, -0.24, 0.15, 0.10, 0.10, 0.10, 0.10);
+    ell(head, dark,  0.10, 0.20, 0.60, 0.045, 0.035, 0.05);
+    ell(head, dark, -0.10, 0.20, 0.60, 0.045, 0.035, 0.05);
+  } else {
+    head.position.set(0, 2.05, 1.65);
+    ell(head, skin, 0, 0, 0, 0.60, 0.55, 0.85);
+    ell(head, skin, 0, -0.15, 0.85, 0.35, 0.28, 0.32);
+    const frill = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.85, 0.85, 0.12, 20, 1, false, -1.2, 2.4), skin);
+    frill.rotation.x = Math.PI / 2;
+    frill.position.set(0, 0.25, -0.55);
+    frill.castShadow = true;
+    head.add(frill);
+    for (const s of [-1, 1]) {
+      const h = new THREE.Mesh(new THREE.ConeGeometry(0.10, 0.75, 7), horn);
+      h.position.set(s * 0.28, 0.32, 0.72);
+      h.rotation.x = -0.35; h.rotation.z = s * 0.25;
+      h.castShadow = true;
+      head.add(h);
+    }
+    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.35, 6), horn);
+    beak.position.set(0, -0.12, 1.10);
+    beak.rotation.x = Math.PI / 2;
+    head.add(beak);
+  }
+
+  const legs = [];
+  for (const [lx, lz] of [[-0.55,1.0],[0.55,1.0],[-0.60,-0.9],[0.60,-0.9]]) {
+    const leg = new THREE.Group();
+    leg.position.set(lx, 1.15, lz);
+    const up = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.19, 1.05, 8), skin);
+    up.position.y = -0.52; up.castShadow = true;
+    leg.add(up);
+    const foot = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.14, 0.44), skin);
+    foot.position.set(0, -1.06, 0.10); foot.castShadow = true;
+    leg.add(foot);
+    g.add(leg);
+    legs.push(leg);
+  }
+
+  const tailSegs = [];
+  const tRoot = new THREE.Group();
+  tRoot.position.set(0, 1.80, -1.55);
+  g.add(tRoot);
+  let tp = tRoot;
+  for (let i = 0; i < 5; i++) {
+    const s = new THREE.Group();
+    s.position.z = (i === 0) ? 0 : -0.55;
+    const m = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.28 - i*0.05, 0.34 - i*0.05, 0.60, 9), skin);
+    m.rotation.x = Math.PI / 2;
+    m.position.z = -0.30;
+    m.castShadow = true;
+    s.add(m);
+    tp.add(s); tp = s;
+    tailSegs.push(s);
+  }
+
+  g.userData = { legs, tail: tailSegs, head, phase: Math.random() * 10, type };
+  return g;
+}
+
+/* =========================================================
+   BUILD WORLD
+   ========================================================= */
+const player = buildTRex();
+player.position.set(0, terrainHeight(0, 0), 0);
+scene.add(player);
+
+const animals = [];
+const HERB_COLORS = [
+  [0x9a7b4f, 0xc9b07a, 'longneck'],
+  [0x6f8fa0, 0xb6c9cf, 'trike'],
+  [0x8b9b56, 0xc4cf8e, 'longneck'],
+  [0xa06a5a, 0xd3a894, 'trike'],
+  [0x7d6a95, 0xbcb0d2, 'longneck'],
+  [0x847a4a, 0xc4bb86, 'trike']
+];
+for (let i = 0; i < 14; i++) {
+  const p = randomLandPoint(22, 98);
+  if (!p) continue;
+  const c = HERB_COLORS[i % HERB_COLORS.length];
+  const h = buildHerbivore(c[0], c[1], c[2]);
+  h.position.set(p.x, p.y, p.z);
+  h.rotation.y = Math.random() * Math.PI * 2;
+  h.userData.dir = Math.random() * Math.PI * 2;
+  h.userData.speed = rand(1.0, 2.6);
+  h.userData.timer = rand(1, 4);
+  h.userData.fleeing = false;
+  scene.add(h);
+  animals.push(h);
+}
+
+// Clouds
+const clouds = [];
+for (let i = 0; i < 16; i++) {
+  const c = new THREE.Group();
+  for (let j = 0; j < 6; j++) {
+    const puff = new THREE.Mesh(
+      new THREE.SphereGeometry(rand(2.8, 5.2), 8, 6),
+      new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, fog: false })
+    );
+    puff.position.set(j * 3.4 - 8, rand(-0.8, 1.6), rand(-2, 2));
+    c.add(puff);
+  }
+  c.position.set(rand(-300, 300), rand(52, 90), rand(-300, 300));
+  c.userData.speed = rand(0.4, 1.3);
+  scene.add(c);
+  clouds.push(c);
+}
+
+/* =========================================================
+   DUST
+   ========================================================= */
+const dustParticles = [];
+const dustGeo = new THREE.PlaneGeometry(0.5, 0.5);
+const dustMat = new THREE.MeshBasicMaterial({
+  color: 0xc4b48a, transparent: true, opacity: 0.55,
+  depthWrite: false, side: THREE.DoubleSide
+});
+function spawnDust(x, y, z, color) {
+  for (let i = 0; i < 5; i++) {
+    const m = new THREE.Mesh(dustGeo, dustMat.clone());
+    if (color) m.material.color.setHex(color);
+    m.position.set(x + rand(-0.4, 0.4), y + rand(0.02, 0.18), z + rand(-0.4, 0.4));
+    m.rotation.x = -Math.PI / 2;
+    m.rotation.z = Math.random() * Math.PI;
+    m.userData.life = 0;
+    m.userData.maxLife = 0.7 + Math.random() * 0.5;
+    m.userData.vel = new THREE.Vector3(rand(-0.3, 0.3), 0.6 + Math.random() * 0.6, rand(-0.3, 0.3));
+    scene.add(m);
+    dustParticles.push(m);
+  }
+}
+function updateDust(dt) {
+  for (let i = dustParticles.length - 1; i >= 0; i--) {
+    const p = dustParticles[i];
+    p.userData.life += dt;
+    p.userData.vel.y -= 1.2 * dt;
+    p.position.addScaledVector(p.userData.vel, dt);
+    const t = p.userData.life / p.userData.maxLife;
+    p.material.opacity = (1 - t) * 0.55;
+    p.scale.setScalar(1 + t * 1.6);
+    if (t >= 1) {
+      scene.remove(p);
+      p.material.dispose();
+      dustParticles.splice(i, 1);
+    }
+  }
+}
+
+/* =========================================================
+   GAME STATE
+   ========================================================= */
+const state = {
+  running: false, paused: false, sprinting: false,
+  health: 100, food: 100, thirst: 100,
+  dayTime: 8, day: 1, elapsed: 0, jumpV: 0, toastTimer: 0,
+  inWater: 0
+};
+
+const keys = {};
+const joyVec = { x: 0, y: 0 };
+const clock = new THREE.Clock();
+
+function toast(text) {
+  const t = $('toast');
+  t.textContent = text;
+  t.style.opacity = 1;
+  state.toastTimer = 2.8;
+}
+
+/* =========================================================
+   PLAYER UPDATE — no collision, walk anywhere
+   ========================================================= */
+const camForward = new THREE.Vector3();
+const camRight   = new THREE.Vector3();
+const moveDir    = new THREE.Vector3();
+const UP         = new THREE.Vector3(0, 1, 0);
+const camTarget  = new THREE.Vector3();
+const camDesired = new THREE.Vector3();
+const camLookAt  = new THREE.Vector3();
+
+function updatePlayer(dt) {
+  let ix = joyVec.x;
+  let iz = joyVec.y;
+  if (keys.KeyD || keys.ArrowRight) ix += 1;
+  if (keys.KeyA || keys.ArrowLeft)  ix -= 1;
+  if (keys.KeyW || keys.ArrowUp)    iz -= 1;
+  if (keys.KeyS || keys.ArrowDown)  iz += 1;
+
+  const mag = Math.hypot(ix, iz);
+  if (mag > 1) { ix /= mag; iz /= mag; }
+  const moving = Math.hypot(ix, iz) > 0.08;
+
+  camera.getWorldDirection(camForward);
+  camForward.y = 0;
+  if (camForward.lengthSq() < 0.0001) camForward.set(0, 0, 1);
+  camForward.normalize();
+  camRight.crossVectors(camForward, UP).normalize();
+
+  moveDir.set(0, 0, 0);
+  if (moving) {
+    moveDir.addScaledVector(camForward, -iz);
+    moveDir.addScaledVector(camRight, ix);
+    moveDir.normalize();
+  }
+
+  const u = player.userData;
+
+  // Water check (just for slowing + dust suppression)
+  const groundH = terrainHeight(player.position.x, player.position.z);
+  state.inWater = groundH < WATER_Y + 0.05 ? 1 : 0;
+
+  // Speed
+  let speed = state.sprinting ? 16.5 : 7.4;
+  if (state.inWater) speed *= 0.6;   // slower in water but still walkable
+
+  if (moving) {
+    // Free movement — no collision checks at all
+    player.position.x = clamp(player.position.x + moveDir.x * speed * dt, -218, 218);
+    player.position.z = clamp(player.position.z + moveDir.z * speed * dt, -218, 218);
+
+    const targetY = Math.atan2(moveDir.x, moveDir.z);
+    let diff = targetY - player.rotation.y;
+    while (diff >  Math.PI) diff -= Math.PI * 2;
+    while (diff < -Math.PI) diff += Math.PI * 2;
+    player.rotation.y += diff * Math.min(1, dt * 8);
+  }
+
+  // Jump
+  const groundY = terrainHeight(player.position.x, player.position.z);
+  if (state.jumpV !== 0 || player.position.y > groundY + 0.01) {
+    state.jumpV -= 36 * dt;
+    player.position.y += state.jumpV * dt;
+    if (player.position.y <= groundY) {
+      player.position.y = groundY;
+      state.jumpV = 0;
+    }
+  } else {
+    player.position.y = groundY;
+  }
+
+  /* ---------- ANIMATION ---------- */
+  const animSpeed = moving ? (state.sprinting ? 12.5 : 6.6) : 1.4;
+  u.phase += dt * animSpeed;
+  u.breathPhase += dt * 1.15;
+
+  const amp = moving ? (state.sprinting ? 1.25 : 1.0) : 0.04;
+  const s = Math.sin(u.phase);
+
+  u.legs[0].hip.rotation.x  =  s * 0.66 * amp;
+  u.legs[1].hip.rotation.x  = -s * 0.66 * amp;
+
+  const bendL = Math.max(0, Math.sin(u.phase + 1.1));
+  const bendR = Math.max(0, Math.sin(u.phase + 1.1 + Math.PI));
+  u.legs[0].knee.rotation.x = (0.22 + bendL * 0.85) * amp + 0.06;
+  u.legs[1].knee.rotation.x = (0.22 + bendR * 0.85) * amp + 0.06;
+  u.legs[0].ankle.rotation.x = -(u.legs[0].hip.rotation.x + u.legs[0].knee.rotation.x) * 0.65;
+  u.legs[1].ankle.rotation.x = -(u.legs[1].hip.rotation.x + u.legs[1].knee.rotation.x) * 0.65;
+
+  const bobAmp = moving ? (state.sprinting ? 0.16 : 0.11) : 0.0;
+  player.position.y += Math.abs(Math.sin(u.phase)) * bobAmp;
+
+  u.hips.rotation.z = Math.sin(u.phase) * 0.05 * amp;
+
+  for (let i = 0; i < u.tail.length; i++) {
+    u.tail[i].rotation.y = Math.sin(u.phase * 0.5 - i * 0.42) * (0.10 + amp * 0.05);
+    u.tail[i].rotation.x = Math.sin(u.phase * 0.4 - i * 0.30) * 0.035;
+  }
+
+  u.neckRoot.rotation.x = Math.sin(u.phase * 0.9) * 0.05 * amp;
+  u.head.rotation.x = Math.sin(u.phase * 2 + 0.3) * 0.06 * amp;
+  u.head.rotation.y = Math.sin(u.phase * 0.6) * 0.07;
+
+  const breath = Math.sin(u.breathPhase) * 0.5 + 0.5;
+  const chest = u.hips.children[1];
+  if (chest) {
+    chest.scale.x = 0.98 + breath * 0.05;
+    chest.scale.y = 1.38 + breath * 0.06;
+  }
+
+  u.arms[0].shoulder.rotation.x = 0.55 + Math.sin(u.phase * 0.4) * 0.08;
+  u.arms[1].shoulder.rotation.x = 0.55 + Math.sin(u.phase * 0.4 + 0.7) * 0.08;
+
+  u.jawTarget += (0 - u.jawTarget) * Math.min(1, dt * 3);
+  u.jaw.rotation.x = u.jawTarget * 0.8;
+
+  u.blinkTimer -= dt;
+  if (u.blinkTimer <= 0) {
+    u.blinkTimer = 2.4 + Math.random() * 3.5;
+    u.eyes.forEach(e => { e.g.scale.y = 0.15; });
+    setTimeout(() => u.eyes.forEach(e => { e.g.scale.y = 1; }), 110);
+  }
+
+  // Footstep dust — only on land, water splash effect in water
+  const leftFootY = u.legs[0].foot.getWorldPosition(new THREE.Vector3()).y;
+  const rightFootY = u.legs[1].foot.getWorldPosition(new THREE.Vector3()).y;
+  const baseY = terrainHeight(player.position.x, player.position.z);
+  if (moving) {
+    const dustColor = state.inWater ? 0x9fd0e0 : 0xc4b48a;
+    if (u.footPrevY[0] > baseY + 0.4 && leftFootY <= baseY + 0.4)
+      spawnDust(player.position.x, baseY, player.position.z, dustColor);
+    if (u.footPrevY[1] > baseY + 0.4 && rightFootY <= baseY + 0.4)
+      spawnDust(player.position.x, baseY, player.position.z, dustColor);
+  }
+  u.footPrevY[0] = leftFootY;
+  u.footPrevY[1] = rightFootY;
+
+  /* ---------- CAMERA ---------- */
+  camTarget.set(player.position.x, player.position.y + 3.6, player.position.z);
+  const fwd = new THREE.Vector3(Math.sin(player.rotation.y), 0, Math.cos(player.rotation.y));
+  camDesired.copy(camTarget).addScaledVector(fwd, -14.5);
+  camDesired.y += 6.0;
+
+  const camGround = terrainHeight(camDesired.x, camDesired.z) + 2.6;
+  if (camDesired.y < camGround) camDesired.y = camGround;
+
+  camera.position.lerp(camDesired, 1 - Math.exp(-5.8 * dt));
+  camLookAt.copy(camTarget).addScaledVector(fwd, 3.2);
+  camera.lookAt(camLookAt);
+
+  sun.target.position.copy(player.position);
+  sun.position.set(player.position.x + 55, player.position.y + 95, player.position.z + 35);
+}
+
+/* =========================================================
+   ANIMALS AI — free roam too
+   ========================================================= */
+function updateAnimals(dt) {
+  for (const a of animals) {
+    const u = a.userData;
+    const distToPlayer = a.position.distanceTo(player.position);
+    u.fleeing = distToPlayer < 18;
+
+    u.timer -= dt;
+    if (u.timer <= 0 && !u.fleeing) {
+      u.timer = rand(2.5, 6.5);
+      u.dir = Math.random() * Math.PI * 2;
+    }
+    if (u.fleeing) {
+      u.dir = Math.atan2(a.position.x - player.position.x, a.position.z - player.position.z);
+    }
+
+    const spd = u.fleeing ? u.speed * 2.2 : u.speed * 0.55;
+    a.position.x = clamp(a.position.x + Math.sin(u.dir) * spd * dt, -218, 218);
+    a.position.z = clamp(a.position.z + Math.cos(u.dir) * spd * dt, -218, 218);
+    a.position.y = terrainHeight(a.position.x, a.position.z);
+
+    let diff = u.dir - a.rotation.y;
+    while (diff >  Math.PI) diff -= Math.PI * 2;
+    while (diff < -Math.PI) diff += Math.PI * 2;
+    a.rotation.y += diff * Math.min(1, dt * 5);
+
+    u.phase += dt * (u.fleeing ? 11 : 5.5);
+    for (let i = 0; i < u.legs.length; i++) {
+      u.legs[i].rotation.x = Math.sin(u.phase + (i % 2 ? Math.PI : 0) + (i > 1 ? 1.2 : 0)) * 0.5;
+    }
+    for (let i = 0; i < u.tail.length; i++) {
+      u.tail[i].rotation.y = Math.sin(u.phase * 0.5 - i * 0.5) * 0.14;
+    }
+    u.head.rotation.x = Math.sin(u.phase * 2) * 0.05;
+  }
+}
+
+/* =========================================================
+   SURVIVAL / DAY-CYCLE
+   ========================================================= */
+function updateSurvival(dt) {
+  state.food   = Math.max(0, state.food   - dt * 0.55);
+  state.thirst = Math.max(0, state.thirst - dt * 0.80);
+
+  if (state.food <= 0)   state.health = Math.max(0, state.health - dt * 1.7);
+  if (state.thirst <= 0) state.health = Math.max(0, state.health - dt * 2.4);
+  if (state.food > 40 && state.thirst > 40)
+    state.health = Math.min(100, state.health + dt * 0.35);
+
+  if (state.health <= 0 && state.running) {
+    state.running = false;
+    toast('💀 O\'yin tugadi! Sahifani yangilab qayta boshlang.');
+  }
+
+  state.dayTime += dt * 0.055;
+  if (state.dayTime >= 24) { state.dayTime -= 24; state.day++; }
+
+  const lightT = clamp(Math.sin((state.dayTime - 6) / 12 * Math.PI), 0.02, 1);
+  const daylight = clamp(lightT * 1.25, 0.06, 1);
+
+  sun.intensity = 0.15 + daylight * 2.9;
+  hemi.intensity = 0.28 + daylight * 1.4;
+
+  const skyU = sky.userData.uniforms;
+  const dayTop = new THREE.Color(0x2a6cb0);
+  const dayMid = new THREE.Color(0x9ccee8);
+  const dayBot = new THREE.Color(0xd9e8ee);
+  const nightTop = new THREE.Color(0x030612);
+  const nightMid = new THREE.Color(0x0a1730);
+  const nightBot = new THREE.Color(0x18253a);
+  const duskMid = new THREE.Color(0xd4834a);
+  const duskBot = new THREE.Color(0xe0a074);
+
+  const dusk = Math.max(0, 1 - Math.abs(state.dayTime - 6.5) / 2) +
+               Math.max(0, 1 - Math.abs(state.dayTime - 18.5) / 2);
+
+  skyU.topColor.value.copy(nightTop).lerp(dayTop, daylight);
+  skyU.midColor.value.copy(nightMid).lerp(dayMid, daylight);
+  skyU.midColor.value.lerp(duskMid, dusk * 0.55);
+  skyU.bottomColor.value.copy(nightBot).lerp(dayBot, daylight);
+  skyU.bottomColor.value.lerp(duskBot, dusk * 0.55);
+
+  const sunAngle = (state.dayTime / 24) * Math.PI * 2 - Math.PI / 2;
+  skyU.sunDir.value.set(Math.cos(sunAngle) * 0.6, Math.sin(sunAngle), 0.4).normalize();
+  skyU.sunColor.value.setRGB(
+    lerp(0.5, 1.0, daylight),
+    lerp(0.35, 0.92, daylight),
+    lerp(0.15, 0.7, daylight)
+  );
+
+  scene.fog.color.copy(skyU.midColor.value).lerp(skyU.bottomColor.value, 0.35);
+  scene.fog.density = lerp(0.006, 0.0034, daylight);
+  starMat.opacity = clamp(1 - daylight * 2.0, 0, 0.9);
+
+  water.position.x = Math.round(player.position.x);
+  water.position.z = Math.round(player.position.z);
+  if (waterMat.userData.shader)
+    waterMat.userData.shader.uniforms.uTime.value = state.elapsed;
+
+  $('hpv').textContent = Math.round(state.health);
+  $('fdv').textContent = Math.round(state.food);
+  $('wtv').textContent = Math.round(state.thirst);
+  $('hpBar').style.width = state.health + '%';
+  $('fdBar').style.width = state.food + '%';
+  $('wtBar').style.width = state.thirst + '%';
+
+  const hh = String(Math.floor(state.dayTime)).padStart(2, '0');
+  const mm = String(Math.floor((state.dayTime % 1) * 60)).padStart(2, '0');
+  $('clock').textContent = (state.dayTime > 6 && state.dayTime < 19 ? '☀️ ' : '🌙 ') + hh + ':' + mm;
+  $('dayNum').textContent = state.day + '-kun';
+  $('coords').textContent =
+    `X: ${Math.round(player.position.x)}  Z: ${Math.round(player.position.z)}`;
+}
+
+/* =========================================================
+   MAP
+   ========================================================= */
+const mapCanvas = $('map');
+const mctx = mapCanvas.getContext('2d');
+const MAP_SIZE = 180, MAP_SCALE = 0.58;
+
+function drawMap() {
+  mctx.clearRect(0, 0, MAP_SIZE, MAP_SIZE);
+  const cx = MAP_SIZE / 2, cy = MAP_SIZE / 2;
+  const toPx = v => cx + v * MAP_SCALE;
+
+  mctx.fillStyle = '#2f5c37';
+  mctx.beginPath();
+  mctx.arc(cx, cy, 118 * MAP_SCALE, 0, Math.PI * 2);
+  mctx.fill();
+
+  mctx.fillStyle = '#1f7fa8';
+  mctx.beginPath();
+  mctx.arc(toPx(LAKE.x), toPx(LAKE.z), LAKE.r * MAP_SCALE, 0, Math.PI * 2);
+  mctx.fill();
+
+  mctx.fillStyle = '#1b4023';
+  for (const t of treePositions) {
+    const dx = t.x - player.position.x, dz = t.z - player.position.z;
+    if (dx*dx + dz*dz > 60*60) continue;
+    mctx.fillRect(toPx(t.x) - 1, toPx(t.z) - 1, 2, 2);
+  }
+
+  mctx.fillStyle = '#e0c060';
+  for (const a of animals) {
+    mctx.beginPath();
+    mctx.arc(toPx(a.position.x), toPx(a.position.z), 2.6, 0, Math.PI * 2);
+    mctx.fill();
+  }
+
+  const px = toPx(player.position.x);
+  const py = toPx(player.position.z);
+  mctx.save();
+  mctx.translate(px, py);
+  mctx.rotate(-player.rotation.y);
+  mctx.fillStyle = '#c6ff9c';
+  mctx.beginPath();
+  mctx.moveTo(0, -7); mctx.lineTo(5, 6); mctx.lineTo(0, 3); mctx.lineTo(-5, 6);
+  mctx.closePath();
+  mctx.fill();
+  mctx.restore();
+}
+
+/* =========================================================
+   ACTIONS
+   ========================================================= */
+function doEat() {
+  let best = null, bestD = 9;
+  for (const p of plants) {
+    if (p.userData.eaten) continue;
+    const d = p.position.distanceTo(player.position);
+    if (d < bestD) { bestD = d; best = p; }
+  }
+  if (best) {
+    best.userData.eaten = true;
+    best.visible = false;
+    state.food = clamp(state.food + 34, 0, 100);
+    state.health = clamp(state.health + 6, 0, 100);
+    player.userData.jawTarget = 0.9;
+    toast('🍃 O\'simlik yedingiz! Ochlik kamaydi.');
+  } else {
+    toast('🌿 Yaqin atrofda o\'simlik yo\'q. Yashil butalarni qidiring!');
+  }
+}
+
+function doDrink() {
+  const d = Math.hypot(player.position.x - LAKE.x, player.position.z - LAKE.z);
+  const inWater = terrainHeight(player.position.x, player.position.z) < WATER_Y + 0.4;
+  if (d < LAKE.r + 3 || inWater) {
+    state.thirst = 100;
+    state.health = clamp(state.health + 4, 0, 100);
+    toast('💧 Suv ichdingiz! Chanqoq qondi.');
+  } else {
+    toast('💧 Suv ichish uchun ko\'lga yoki suvga yaqinlashing.');
+  }
+}
+
+let audioCtx = null;
+function roarSound() {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const t = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const osc2 = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    const filter = audioCtx.createBiquadFilter();
+
+    osc.type = 'sawtooth'; osc2.type = 'square';
+    osc.frequency.setValueAtTime(120, t);
+    osc.frequency.exponentialRampToValueAtTime(40, t + 1.2);
+    osc2.frequency.setValueAtTime(61, t);
+    osc2.frequency.exponentialRampToValueAtTime(22, t + 1.2);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(1200, t);
+    filter.frequency.exponentialRampToValueAtTime(220, t + 1.25);
+
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(0.30, t + 0.08);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 1.4);
+
+    osc.connect(filter); osc2.connect(filter);
+    filter.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(t);  osc.stop(t + 1.45);
+    osc2.start(t); osc2.stop(t + 1.45);
+  } catch (e) {}
+
+  player.userData.jawTarget = 1.0;
+  setTimeout(() => { player.userData.jawTarget = 0; }, 720);
+  toast('📣 RAAARRR! Orol bo\'ylab ovozing taraldi!');
+}
+
+/* =========================================================
+   SAVE / LOAD
+   ========================================================= */
+const SAVE_KEY = 'dinosaurWorld3D_v5';
+
+function saveGame() {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      x: player.position.x, z: player.position.z, ry: player.rotation.y,
+      health: state.health, food: state.food, thirst: state.thirst,
+      dayTime: state.dayTime, day: state.day,
+      eaten: plants.map(p => p.userData.eaten ? 1 : 0)
+    }));
+    toast('💾 O\'yin saqlandi!');
+  } catch (e) { toast('⚠️ Saqlash imkoni bo\'lmadi.'); }
+}
+
+function loadGame() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+    const s = JSON.parse(raw);
+    player.position.x = s.x ?? 0;
+    player.position.z = s.z ?? 0;
+    player.rotation.y  = s.ry ?? 0;
+    player.position.y  = terrainHeight(player.position.x, player.position.z);
+    state.health = clamp(s.health ?? 100, 0, 100);
+    state.food   = clamp(s.food   ?? 100, 0, 100);
+    state.thirst = clamp(s.thirst ?? 100, 0, 100);
+    state.dayTime = s.dayTime ?? 8;
+    state.day     = s.day ?? 1;
+    if (Array.isArray(s.eaten)) {
+      s.eaten.forEach((v, i) => {
+        if (plants[i] && v) { plants[i].userData.eaten = true; plants[i].visible = false; }
+      });
+    }
+    toast('📂 Saqlangan o\'yin yuklandi!');
+    return true;
+  } catch (e) { return false; }
+}
+
+/* =========================================================
+   CONTROLS
+   ========================================================= */
+addEventListener('keydown', e => {
+  keys[e.code] = true;
+  if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
+  if (e.code === 'Space' && state.running && !state.paused) {
+    const g = terrainHeight(player.position.x, player.position.z);
+    if (player.position.y <= g + 0.05) state.jumpV = 16.5;
+  }
+  if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+    state.sprinting = true;
+    $('btnRun').classList.add('on');
+  }
+});
+addEventListener('keyup', e => {
+  keys[e.code] = false;
+  if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+    state.sprinting = false;
+    $('btnRun').classList.remove('on');
+  }
+});
+
+const joyEl = $('joy');
+const knobEl = $('knob');
+let joyId = null;
+function joyMove(e) {
+  const r = joyEl.getBoundingClientRect();
+  let dx = e.clientX - (r.left + r.width / 2);
+  let dy = e.clientY - (r.top + r.height / 2);
+  const max = r.width * 0.34;
+  const len = Math.hypot(dx, dy);
+  if (len > max) { dx = dx / len * max; dy = dy / len * max; }
+  knobEl.style.left = (r.width / 2 - 24 + dx) + 'px';
+  knobEl.style.top  = (r.height / 2 - 24 + dy) + 'px';
+  joyVec.x = dx / max;
+  joyVec.y = dy / max;
+}
+joyEl.addEventListener('pointerdown', e => {
+  joyId = e.pointerId;
+  joyEl.setPointerCapture(e.pointerId);
+  joyMove(e);
+});
+joyEl.addEventListener('pointermove', e => { if (e.pointerId === joyId) joyMove(e); });
+function joyEnd(e) {
+  if (joyId !== null && e && e.pointerId !== joyId) return;
+  joyId = null;
+  joyVec.x = joyVec.y = 0;
+  knobEl.style.left = '';
+  knobEl.style.top = '';
+}
+joyEl.addEventListener('pointerup', joyEnd);
+joyEl.addEventListener('pointercancel', joyEnd);
+joyEl.addEventListener('lostpointercapture', joyEnd);
+
+$('btnRun').addEventListener('click', () => {
+  state.sprinting = !state.sprinting;
+  $('btnRun').classList.toggle('on', state.sprinting);
+  toast(state.sprinting ? '🏃 Yugurish yoqildi' : '🐾 Oddiy yurish');
+});
+$('btnJump').addEventListener('click', () => {
+  const g = terrainHeight(player.position.x, player.position.z);
+  if (player.position.y <= g + 0.05) state.jumpV = 16.5;
+});
+$('btnEat').addEventListener('click', doEat);
+$('btnDrink').addEventListener('click', doDrink);
+$('btnRoar').addEventListener('click', roarSound);
+$('btnSave').addEventListener('click', saveGame);
+
+$('btnStart').addEventListener('click', () => {
+  $('menu').style.display = 'none';
+  state.running = true;
+  loadGame();
+  toast('🌴 Orol sen uchun ochiq! Hamma joyga yur!');
+});
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) state.paused = true;
+  else if (state.running) state.paused = false;
+});
+
+/* =========================================================
+   MAIN LOOP
+   ========================================================= */
+let mapTimer = 0;
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05);
+
+  if (state.running && !state.paused) {
+    state.elapsed += dt;
+    updatePlayer(dt);
+    updateAnimals(dt);
+    updateSurvival(dt);
+    updateDust(dt);
+
+    for (const c of clouds) {
+      c.position.x += c.userData.speed * dt;
+      if (c.position.x > 320) c.position.x = -320;
+    }
+
+    if (state.toastTimer > 0) {
+      state.toastTimer -= dt;
+      if (state.toastTimer <= 0) $('toast').style.opacity = 0;
+    }
+
+    mapTimer += dt;
+    if (mapTimer > 0.1) { mapTimer = 0; drawMap(); }
+  }
+  renderer.render(scene, camera);
+}
+
+// INIT
+player.position.y = terrainHeight(0, 0);
+camera.position.set(0, 11, -17);
+camera.lookAt(0, 3, 0);
+$('loader').style.display = 'none';
+drawMap();
+animate();
+</script>
+</body>
+</html>
